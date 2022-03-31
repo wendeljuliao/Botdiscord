@@ -8,14 +8,65 @@ defmodule Botdiscord.Consumer do
   end
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
-    case msg.content do
-      "!ping" -> Api.create_message(msg.channel_id, "pong")
-      _ -> :ignore
+    cond do
+      msg.content == "!ping" -> Api.create_message(msg.channel_id, "pong")
+      msg.content == "!yeye" -> Api.create_message(msg.channel_id, "glu glu :grin:")
+      
+      String.starts_with?(msg.content, "!ppt ") -> handlePPTCommand(msg)
+
+      msg.content == "!ppt" -> Api.create_message(msg.channel_id, "Comando para jogar pedra, papel ou tesoura\nUse **!ppt <elemento>**, onde _<elemento>_ deve ser _pedra_, _papel_, ou _tesoura_.")
+      
+      String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente!")
+
+      true -> :ignore
     end
   end
 
   def handle_event(_event) do
     :noop
+  end
+
+  def handlePPTCommand(msg) do
+    aux = String.split(msg.content)
+    arg = Enum.fetch!(aux, 1)
+    rn = :rand.uniform(3)
+    case arg do
+      "pedra" -> 
+        handleRock(rn, msg)
+
+      "papel" -> 
+        handlePaper(rn, msg)
+
+      "tesoura" -> 
+        handleScissors(rn, msg)
+
+      _ -> Api.create_message(msg.channel_id, "Argumento inválido!")
+
+    end
+  end
+
+  defp handleRock(rn, msg) do
+    case rn do
+      1 -> Api.create_message(msg.channel_id, "O bot escolheu pedra, houve um empate!")
+      2 -> Api.create_message(msg.channel_id, "O bot escolheu papel, o bot ganhou!")
+      3 -> Api.create_message(msg.channel_id, "O bot escolheu tesoura, você ganhou!")
+    end
+  end
+
+  defp handlePaper(rn, msg) do
+    case rn do
+       1 -> Api.create_message(msg.channel_id, "O bot escolheu pedra, você ganhou!")
+          2 -> Api.create_message(msg.channel_id, "O bot escolheu papel, houve um empate!")
+          3 -> Api.create_message(msg.channel_id, "O bot escolheu tesoura, o bot ganhou!")
+    end
+  end
+
+  defp handleScissors(rn, msg) do
+    case rn do
+      1 -> Api.create_message(msg.channel_id, "O bot escolheu pedra, o bot ganhou!")
+      2 -> Api.create_message(msg.channel_id, "O bot escolheu papel, você ganhou!")
+      3 -> Api.create_message(msg.channel_id, "O bot escolheu tesoura, houve um empate!")
+    end
   end
 
 end
