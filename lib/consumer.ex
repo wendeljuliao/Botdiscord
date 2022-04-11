@@ -13,9 +13,12 @@ defmodule Botdiscord.Consumer do
       msg.content == "!yeye" -> Api.create_message(msg.channel_id, "glu glu :grin:")
       
       String.starts_with?(msg.content, "!ppt ") -> handlePPTCommand(msg)
-
       msg.content == "!ppt" -> Api.create_message(msg.channel_id, "Comando para jogar pedra, papel ou tesoura\nUse **!ppt <elemento>**, onde _<elemento>_ deve ser _pedra_, _papel_, ou _tesoura_.")
       
+      String.starts_with?(msg.content, "!tempo ") -> handleWeather(msg)
+      msg.content == "!tempo" -> Api.create_message(msg.channel_id, "Use **!tempo** <nome-da-cidade>")
+
+
       String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente!")
 
       true -> :ignore
@@ -26,7 +29,31 @@ defmodule Botdiscord.Consumer do
     :noop
   end
 
-  def handlePPTCommand(msg) do
+  defp handleWeather(msg) do
+    aux = String.split(msg.content, " ", parts: 2)
+    cidade = Enum.fetch!(aux, 1)
+    
+    resp = HTTPoison.get!("https://api.openweathermap.org/data/2.5/weather?q=#{cidade}&appid=#{Application.fetch_env!(:nostrum, :tokenWeather)}&units=metric")
+    
+    {:ok, map} = Poison.decode(resp.body)
+
+    case map["cod"] do
+
+      200 -> 
+        temp = map["main"]["temp"]
+        Api.create_message(msg.channel_id, "A temperatura da cidade #{cidade} é de #{temp} °C")
+      
+      "404" -> 
+        Api.create_message(msg.channel_id, "A cidade #{cidade} não foi encontrada. Tente novamente!")
+
+
+    end
+
+    
+
+  end
+
+  defp handlePPTCommand(msg) do
     aux = String.split(msg.content)
     arg = Enum.fetch!(aux, 1)
     rn = :rand.uniform(3)
