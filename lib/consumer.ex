@@ -26,6 +26,12 @@ defmodule Botdiscord.Consumer do
       String.starts_with?(msg.content, "!pokemon ") -> handlePokemon(msg)
       msg.content == "!pokemon" -> Api.create_message(msg.channel_id, "Use !pokemon <nome>, onde nome deve ser o nome de um pokemon (ex: Ditto, Charmander, Bulbasaur, etc...)")
 
+      String.starts_with?(msg.content, "!dog") -> handleDog(msg)
+      
+      String.starts_with?(msg.content, "!stoicism") -> handleStoicism(msg)
+
+      String.starts_with?(msg.content, "!rickmorty ") -> handleRickMorty(msg)
+      msg.content == "!rickmorty" -> Api.create_message(msg.channel_id, "Use !rickmorty <nome>, onde nome deve ser o nome de um personagem da série Rick and Morty (ex: Rick, Morty, etc...)")
 
 
       String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente!")
@@ -34,8 +40,54 @@ defmodule Botdiscord.Consumer do
     end
   end
 
+  # Funções auxiliares
+
+  defp formatarTexto(texto) do
+    aux = String.replace(texto, " ", "%20")
+
+    aux
+  end
+
   def handle_event(_event) do
     :noop
+  end
+
+  defp handleRickMorty(msg) do
+    aux = String.split(msg.content, " ", parts: 2)
+    nome = Enum.fetch!(aux, 1)
+
+    resp = HTTPoison.get!("https://rickandmortyapi.com/api/character/?name=#{formatarTexto(nome)}")
+
+    {:ok, map} = Poison.decode(resp.body)
+
+    case map["error"] == nil do
+      true ->
+        resultados = map["results"]
+        personagem = Enum.fetch!(resultados, 0)
+        Api.create_message(msg.channel_id, "Nome: #{personagem["name"]}\nStatus: #{personagem["status"]}\nEspécies: #{personagem["species"]}\n#{personagem["image"]}")
+
+      _ -> 
+        Api.create_message(msg.channel_id, "O nome #{nome} não foi encontrada. Tente novamente!")
+    end
+    
+  end
+
+  defp handleStoicism(msg) do
+    resp = HTTPoison.get!("https://api.themotivate365.com/stoic-quote")
+
+    {:ok, map} = Poison.decode(resp.body)
+
+    info = map["data"]
+
+    Api.create_message(msg.channel_id, "Autor #{info["author"]}: #{info["quote"]}")
+  end
+
+  defp handleDog(msg) do
+    resp = HTTPoison.get!("https://dog.ceo/api/breeds/image/random")
+
+    {:ok, map} = Poison.decode(resp.body)
+
+    Api.create_message(msg.channel_id, map["message"])
   end
 
   defp handlePokemon(msg) do
@@ -46,7 +98,7 @@ defmodule Botdiscord.Consumer do
     
     {isOk, map} = Poison.decode(resp.body)
 
-    case isOk != :error do
+    case map["error"] != nil do
       true -> 
         pokemon = map["pokemon"]
         Api.create_message(msg.channel_id, "Nome: #{pokemon["name"]}.\n #{map["sprites"]["front_default"]}")
