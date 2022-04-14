@@ -15,9 +15,6 @@ defmodule Botdiscord.Consumer do
       String.starts_with?(msg.content, "!news ") -> handleNews(msg)
       msg.content == "!news" -> Api.create_message(msg.channel_id, "Use !news <categoria>, onde categoria deve ser business, sports, politics, technology, startup")
 
-      String.starts_with?(msg.content, "!valorant ") -> handleValorant(msg)
-      msg.content == "!valorant" -> Api.create_message(msg.channel_id, "Use !valorant <personagem>, onde personagem deve ser o nome de um agente do jogo (ex: Killjoy, Reyna, etc...)")
-
       String.starts_with?(msg.content, "!covid ") -> handleCovid(msg)
       msg.content == "!covid" -> Api.create_message(msg.channel_id, "Use !covid <país>, onde país deve ser o nome do país em inglês (ex: Brazil, France, Portugal, etc...)")
 
@@ -32,6 +29,14 @@ defmodule Botdiscord.Consumer do
 
       String.starts_with?(msg.content, "!rickmorty ") -> handleRickMorty(msg)
       msg.content == "!rickmorty" -> Api.create_message(msg.channel_id, "Use !rickmorty <nome>, onde nome deve ser o nome de um personagem da série Rick and Morty (ex: Rick, Morty, etc...)")
+
+      String.starts_with?(msg.content, "!detect ") -> handleDetectLanguage(msg)
+      msg.content == "!detect" -> Api.create_message(msg.channel_id, "Use !detect <frase>, onde a frase deve ser em algum idioma para detectarmos.")
+
+      String.starts_with?(msg.content, "!password") -> handlePassword(msg)
+
+      String.starts_with?(msg.content, "!validaCEP ") -> handleValidaCEP(msg)
+      msg.content == "!validaCEP" -> Api.create_message(msg.channel_id, "Use !validaCEP <cep>, onde cep deve ser algum cep válido (ex: 60125025, etc...).")
 
 
       String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente!")
@@ -52,9 +57,65 @@ defmodule Botdiscord.Consumer do
     :noop
   end
 
+  defp handleValidaCEP(msg) do
+    aux = String.split(msg.content)
+    cep = Enum.fetch!(aux, 1)
+
+    resp = HTTPoison.get!("https://viacep.com.br/ws/#{cep}/json/")
+
+    
+    case resp.status_code != 400 do
+      true ->
+        {:ok, map} = Poison.decode(resp.body)
+        case map["erro"] == nil do
+          true -> 
+            Api.create_message(msg.channel_id, "#{map["logradouro"]} #{map["complemento"]} | #{map["bairro"]} | #{map["localidade"]}")
+          _ -> 
+            Api.create_message(msg.channel_id, "CEP não encontrado")
+        end
+      _ -> 
+        Api.create_message(msg.channel_id, "CEP inválido")
+    end
+
+  end
+
+  defp handlePassword(msg) do
+    resp = HTTPoison.get!("https://passwordinator.herokuapp.com/?num=true&char=true&caps=true&len=18")
+
+    {:ok, map} = Poison.decode(resp.body)
+
+    password = map["data"]
+    
+    case password != nil do
+      true -> 
+        Api.create_message(msg.channel_id, "A senha gerada é #{map["data"]}")
+      _ -> 
+        Api.create_message(msg.channel_id, "Serviço indisponível no momento")
+    end
+
+  end
+
+  defp handleDetectLanguage(msg) do
+    aux = String.split(msg.content, " ", parts: 2)
+    frase = Enum.fetch!(aux, 1)
+
+    resp = HTTPoison.get!("https://ws.detectlanguage.com/0.2/detect?q=#{formatarTexto(frase)}&key=#{Application.fetch_env!(:nostrum, :tokenLanguage)}")
+
+    {:ok, map} = Poison.decode(resp.body)
+
+    case map["data"] != nil do
+      true ->
+        detection = Enum.fetch!(map["data"]["detections"], 0)
+        Api.create_message(msg.channel_id, "A lingua desse frase é em #{String.upcase(detection["language"])}")
+      _ -> 
+        Api.create_message(msg.channel_id, "Não conseguimos detectar sua frase, pois possui caracteres que não compreendo.")
+    end
+
+  end
+
   defp handleRickMorty(msg) do
     aux = String.split(msg.content, " ", parts: 2)
-    nome = Enum.fetch!(aux, 1)
+    nome = String.downcase(Enum.fetch!(aux, 1))
 
     resp = HTTPoison.get!("https://rickandmortyapi.com/api/character/?name=#{formatarTexto(nome)}")
 
@@ -96,7 +157,7 @@ defmodule Botdiscord.Consumer do
 
     resp = HTTPoison.get!("https://pokeapi.co/api/v2/pokemon-form/#{nome}")
     
-    {isOk, map} = Poison.decode(resp.body)
+    {:ok, map} = Poison.decode(resp.body)
 
     case map["error"] != nil do
       true -> 
@@ -133,10 +194,6 @@ defmodule Botdiscord.Consumer do
         Api.create_message(msg.channel_id, "O país #{pais} não foi encontrado. Tente novamente!")
 
     end
-  end
-
-  defp handleValorant(msg) do
-    :noop
   end
 
   defp handleNews(msg) do
