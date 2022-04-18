@@ -38,6 +38,12 @@ defmodule Botdiscord.Consumer do
       String.starts_with?(msg.content, "!validaCEP ") -> handleValidaCEP(msg)
       msg.content == "!validaCEP" -> Api.create_message(msg.channel_id, "Use !validaCEP <cep>, onde cep deve ser algum cep válido (ex: 60125025, etc...).")
 
+      String.starts_with?(msg.content, "!lol ") -> handleLol(msg)
+      msg.content == "!lol" -> Api.create_message(msg.channel_id, "Use !lol <campeao>, onde campeao deve ser o nome de um personagem do jogo League Of Legends (ex: Aatrox, Yorick, etc...)")
+
+      String.starts_with?(msg.content, "!expressao ") -> handleExpressao(msg)
+      msg.content == "!expressao" -> Api.create_message(msg.channel_id, "Use !expressao <tipo>, onde tipo deve ser random (expressão aleatória), add (soma), sub (subtração), mul (multiplicação) e div (divisão)")
+
 
       String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente!")
 
@@ -53,8 +59,51 @@ defmodule Botdiscord.Consumer do
     aux
   end
 
+  defp maiusculoTexto(texto) do
+    aux = String.split(texto, " ");
+
+    vetorTexto = for n <- aux, do: String.capitalize(n)
+  end
+
   def handle_event(_event) do
     :noop
+  end
+
+  defp handleExpressao(msg) do
+    aux = String.split(msg.content, " ")
+    tipo = Enum.fetch!(aux, 1)
+
+    resp = HTTPoison.get!("https://x-math.herokuapp.com/api/#{tipo}")
+
+    case resp.status_code != 404 do
+      true -> 
+        {:ok, map} = Poison.decode(resp.body)
+        Api.create_message(msg.channel_id, "Expressão: #{map["expression"]} | Resposta: #{map["answer"]}")
+      _ -> 
+        Api.create_message(msg.channel_id, "Tipo inválido, tente novamente!")
+    end
+
+
+  end
+
+  defp handleLol(msg) do
+    aux = String.split(msg.content, " ", parts: 2)
+    nome = Enum.fetch!(aux, 1)
+
+    textoForm = Enum.join(maiusculoTexto(nome), "")
+
+    resp = HTTPoison.get!("https://ddragon.leagueoflegends.com/cdn/12.7.1/data/pt_BR/champion/#{textoForm}.json")
+
+    case resp.status_code != 403 do
+      true -> 
+        {:ok, map} = Poison.decode(resp.body)
+        personagem = map["data"][textoForm]
+        Api.create_message(msg.channel_id, "Nome: #{personagem["name"]} | Título: #{personagem["title"]} | Tags: [#{Enum.join(personagem["tags"], ", ")}] \nFrase: #{personagem["lore"]}")
+        
+      _ -> 
+        Api.create_message(msg.channel_id, "O nome #{nome} não foi encontrada. Verifique a grafia ou se realmente esse campeão existe e tente novamente!")
+    end
+
   end
 
   defp handleValidaCEP(msg) do
@@ -181,9 +230,11 @@ defmodule Botdiscord.Consumer do
 
   defp handleCovid(msg) do
     aux = String.split(msg.content, " ", parts: 2)
-    pais = String.capitalize(Enum.fetch!(aux, 1))
+    pais = Enum.fetch!(aux, 1)
 
-    resp = HTTPoison.get!("https://covid-api.mmediagroup.fr/v1/cases?country=#{pais}")
+    paisForm = Enum.join(maiusculoTexto(pais), "%20")
+
+    resp = HTTPoison.get!("https://covid-api.mmediagroup.fr/v1/cases?country=#{paisForm}")
 
     {:ok, map} = Poison.decode(resp.body)
 
