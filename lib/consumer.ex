@@ -44,8 +44,21 @@ defmodule Botdiscord.Consumer do
       String.starts_with?(msg.content, "!expressao ") -> handleExpressao(msg)
       msg.content == "!expressao" -> Api.create_message(msg.channel_id, "Use !expressao <tipo>, onde tipo deve ser random (expressão aleatória), add (soma), sub (subtração), mul (multiplicação) e div (divisão)")
 
-
-      String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente!")
+      String.starts_with?(msg.content, "!help") -> Api.create_message(msg.channel_id, "Os comandos são:\n
+       !tempo <nome-da-cidade> -> Ver como está a temperatura naquela cidade em °C.\n
+       !news <categoria> -> Ver as notícias acerca da categoria (business, sports, politics, technology, startup) digitada.\n
+       !covid <país> -> Ver a quantidade de casos e mortes de covid naquele país (deve ser o nome em inglês).\n
+       !coffee -> Imagem de café aleatório para você ficar com água na boca hehe!\n
+       !pokemon <nome> -> Ver uma imagem do pokemon referente ao nome (ex: Ditto, Charmander) digitado.\n
+       !dog -> Imagem de um cachorro aleatório para você apreciar a fofura.\n
+       !stoicism -> Frase aleatória sobre a doutrina estoicismo (preza a fidelidade ao conhecimento e o foco em tudo aquilo que pode ser controlado somente pela própria pessoa.).\n
+       !rickmorty <nome> -> Ver informações sobre um personagem da série Rick and Morty onde nome deve ser um personagem da série (ex: Rick, Morty).\n
+       !detect <frase> -> Identificar qual é o idioma da frase digitada (OBS: não é aceito todos os idiomas, ex: japonês).\n
+       !password -> Gerar uma senha aleatória para você usar em cadastros.\n
+       !validaCEP <cep> -> Ver informações sobre o cep (ex: 60125025) digitado.\n
+       !lol <campeao> -> Ver informações sobre aquele campeão (ex: Yorick, Aatrox) do jogo League of Legends.\n
+       !expressao <tipo> -> Gerar expressão aleatória de acordo com o tipo (add, sub, mul. div).")
+      String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente! Digite !help para ver as opções")
 
       true -> :ignore
     end
@@ -206,10 +219,9 @@ defmodule Botdiscord.Consumer do
 
     resp = HTTPoison.get!("https://pokeapi.co/api/v2/pokemon-form/#{nome}")
     
-    {:ok, map} = Poison.decode(resp.body)
-
-    case map["error"] != nil do
+    case resp.status_code != 404 do
       true -> 
+        {:ok, map} = Poison.decode(resp.body)
         pokemon = map["pokemon"]
         Api.create_message(msg.channel_id, "Nome: #{pokemon["name"]}.\n #{map["sprites"]["front_default"]}")
         
