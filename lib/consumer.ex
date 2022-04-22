@@ -57,7 +57,7 @@ defmodule Botdiscord.Consumer do
        !password -> Gerar uma senha aleatória para você usar em cadastros.\n
        !validaCEP <cep> -> Ver informações sobre o cep (ex: 60125025) digitado.\n
        !lol <campeao> -> Ver informações sobre aquele campeão (ex: Yorick, Aatrox) do jogo League of Legends.\n
-       !expressao <tipo> -> Gerar expressão aleatória de acordo com o tipo (add, sub, mul. div).")
+       !expressao <tipo> -> Gerar expressão aleatória de acordo com o tipo (add, sub, mul, div).")
       String.starts_with?(msg.content, "!") -> Api.create_message(msg.channel_id, "Comando inválido, tente novamente! Digite !help para ver as opções")
 
       true -> :ignore
