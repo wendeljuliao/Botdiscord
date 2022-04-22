@@ -2,7 +2,7 @@
 
 ## Nome dos Integrantes
 
-Wendel Julião - 2020701 - N24AB
+Wendel Alves Julião Costa - 2020701 - N24AB
 
 ## Descrição do propósito
 
@@ -16,7 +16,7 @@ Os comandos são:
 6. !dog -> Imagem de um cachorro aleatório para você apreciar a fofura.
 7. !stoicism -> Frase aleatória sobre a doutrina estoicismo (preza a fidelidade ao conhecimento e o foco em tudo aquilo que pode ser controlado somente pela própria pessoa.).
 8. !rickmorty <nome> -> Ver informações sobre um personagem da série Rick and Morty onde nome deve ser um personagem da série (ex: Rick, Morty).
-9. !detect <frase> -> Identificar qual é o idioma da frase digitada (OBS: não é aceito todos os idiomas, ex: japonês).
+9. !detect <frase> -> Identificar qual é o idioma (dizendo a SIGLA, ex: PT, EN, ES) da frase digitada (OBS: não é aceito todos os idiomas, ex: japonês e caracteres especiais (tem que ser caracteres contidos na tabela ascii)).
 10. !password -> Gerar uma senha aleatória para você usar em cadastros.
 11. !validaCEP <cep> -> Ver informações sobre o cep (ex: 60125025) digitado.
 12. !lol <campeao> -> Ver informações sobre aquele campeão (ex: Yorick, Aatrox) do jogo League of Legends.
@@ -36,6 +36,6 @@ Os comandos são:
 8. !rickmorty Rick | !rickmorty Morty | !rickmorty evil morty
 9. !detect O rato roeu a roupa do rei de Roma | !detect Hello people, i am here. | !detect hola chicos, estoy aqui
 10. !password
-11. !validaCEP 60125025 | !validaCEP 6012020
+11. !validaCEP 60125025 | !validaCEP 60120020
 12. !lol yorick | !lol miss fortune
 13. !expressao add | !expressao mul

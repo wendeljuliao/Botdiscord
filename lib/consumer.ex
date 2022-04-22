@@ -53,7 +53,7 @@ defmodule Botdiscord.Consumer do
        !dog -> Imagem de um cachorro aleatório para você apreciar a fofura.\n
        !stoicism -> Frase aleatória sobre a doutrina estoicismo (preza a fidelidade ao conhecimento e o foco em tudo aquilo que pode ser controlado somente pela própria pessoa.).\n
        !rickmorty <nome> -> Ver informações sobre um personagem da série Rick and Morty onde nome deve ser um personagem da série (ex: Rick, Morty).\n
-       !detect <frase> -> Identificar qual é o idioma da frase digitada (OBS: não é aceito todos os idiomas, ex: japonês).\n
+       !detect <frase> -> Identificar qual é o idioma da frase digitada (OBS: não é aceito todos os idiomas, ex: japonês e caracteres especiais (tem que ser caracteres contidos na tabela ascii)).\n
        !password -> Gerar uma senha aleatória para você usar em cadastros.\n
        !validaCEP <cep> -> Ver informações sobre o cep (ex: 60125025) digitado.\n
        !lol <campeao> -> Ver informações sobre aquele campeão (ex: Yorick, Aatrox) do jogo League of Legends.\n
@@ -163,12 +163,13 @@ defmodule Botdiscord.Consumer do
 
     resp = HTTPoison.get!("https://ws.detectlanguage.com/0.2/detect?q=#{formatarTexto(frase)}&key=#{Application.fetch_env!(:nostrum, :tokenLanguage)}")
 
-    {:ok, map} = Poison.decode(resp.body)
-
-    case map["data"] != nil do
-      true ->
+    
+    case resp.status_code do
+      200 ->
+        {:ok, map} = Poison.decode(resp.body)
         detection = Enum.fetch!(map["data"]["detections"], 0)
         Api.create_message(msg.channel_id, "A lingua desse frase é em #{String.upcase(detection["language"])}")
+
       _ -> 
         Api.create_message(msg.channel_id, "Não conseguimos detectar sua frase, pois possui caracteres que não compreendo.")
     end
