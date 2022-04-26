@@ -88,12 +88,16 @@ defmodule Botdiscord.Consumer do
 
     resp = HTTPoison.get!("https://x-math.herokuapp.com/api/#{tipo}")
 
-    case resp.status_code != 404 do
-      true -> 
+    case resp.status_code do
+      200 -> 
         {:ok, map} = Poison.decode(resp.body)
         Api.create_message(msg.channel_id, "Expressão: #{map["expression"]} | Resposta: #{map["answer"]}")
-      _ -> 
+      404 -> 
         Api.create_message(msg.channel_id, "Tipo inválido, tente novamente!")
+      503 -> 
+        Api.create_message(msg.channel_id, "Serviço indisponível no momento!")
+      _ -> 
+        Api.create_message(msg.channel_id, "Erro desconhecido, estamos trabalhando para resolver o mais rápido possível!")
     end
 
 
